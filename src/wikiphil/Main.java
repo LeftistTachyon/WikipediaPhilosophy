@@ -15,6 +15,7 @@ public class Main {
     /**
      * The main method
      * @param args the command line arguments
+     * @throws java.io.IOException AAAAAAAAAAAAAAAAAAAAs
      */
     public static void main(String[] args) throws IOException {
         /*int cores = Runtime.getRuntime().availableProcessors();
@@ -55,6 +56,7 @@ public class Main {
             Elements bodyStuff = current.select("div#bodyContent");
             Elements parags = bodyStuff.select("p");
             Element toGo = null;
+            System.out.println(parags.select("a[href]"));
             if(parags.select("a[href]").isEmpty()) {
                 outer: for (Element parag : parags) {
                     Document p = Jsoup.parse(parse(parag.outerHtml()));
@@ -73,8 +75,19 @@ public class Main {
                 }
             } else {
                 Elements listElements = bodyStuff.select("li");
-                for(Element li:  listElements) {
-                    
+                outer: for(Element listElement: listElements) {
+                    Document li = Jsoup.parse(parse(listElement.outerHtml()));
+                    Elements links = li.select("a[href]");
+                    if(links.isEmpty()) continue;
+                    for(Element link : links) {
+                        String linkHref = link.attr("href");
+                        if(!linkHref.contains("#") && !linkHref.contains(":") 
+                                && !linkHref.contains("redlink") && 
+                                !linkHref.contains("upload.wikimedia.org")) {
+                            toGo = link;
+                            break outer;
+                        }
+                    }
                 }
             }
             /*Elements links = parags.select("a[href]");
@@ -111,18 +124,19 @@ public class Main {
                     "https://en.wikipedia.org" + toGo.attr("href"))
                 .get().outerHtml()));*/
             current = Jsoup.connect(
-                    toGo.attr("abs:href")).get();
+                    "https://en.wikipedia.org" + toGo.attr("href")).get();
         }
         Element title = current.selectFirst("h1#firstHeading");
         System.out.println("Got to Philosophy! " + title.text() + "\n");
     }
     
     public static String parse(String document) {
-        String[] data = document.split("\\(.*?\\)");
+        /*String[] data = document.split("\\(.*?\\)");
         String total = "";
         for (String string : data) {
             total += string;
         }
-        return total;
+        return total;*/
+        return document.replaceAll("\\(.*?\\)", "");
     }
 }
