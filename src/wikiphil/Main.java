@@ -46,7 +46,7 @@ public class Main {
                     "https://en.wikipedia.org/wiki/Special:Random")
                 .get().outerHtml()));*/
         Document current = Jsoup.connect(
-                "https://en.wikipedia.org/wiki/Special:Random").get();
+                "https://en.wikipedia.org/wiki/United_States").get();
         while(!current.title().equals("Philosophy - Wikipedia")) {
             String title = current.selectFirst("h1#firstHeading").text();
             System.out.println(title);
@@ -60,10 +60,13 @@ public class Main {
             if(parags.select("a[href]").isEmpty()) {
                 Elements listElements = bodyStuff.select("li");
                 outer: for(Element listElement: listElements) {
-                    Document li = Jsoup.parse(parse(listElement.outerHtml()));
+                    String temp = listElement.outerHtml();
+                    TreeMap<Integer, Integer> map = map(temp);
+                    Document li = Jsoup.parse(temp);
                     Elements links = li.select("a[href]");
                     if(links.isEmpty()) continue;
                     for(Element link : links) {
+                        if(link.text().equals("Coordinates")) continue outer;
                         String linkHref = link.attr("href");
                         if(!linkHref.contains("#") && !linkHref.contains(":")
                                 && !linkHref.contains("redlink") && 
@@ -75,10 +78,13 @@ public class Main {
                 }
             } else {
                 outer: for (Element parag : parags) {
-                    Document p = Jsoup.parse(parse(parag.outerHtml()));
+                    String temp = parag.outerHtml();
+                    TreeMap<Integer, Integer> map = map(temp);
+                    Document p = Jsoup.parse(temp);
                     Elements links = p.select("a[href]");
                     if(links.isEmpty()) continue;
                     for(Element link : links) {
+                        if(link.text().equals("Coordinates")) continue outer;
                         String linkHref = link.attr("href");
                         if(!"".equals(linkHref) &&
                                 !linkHref.contains("#") && !linkHref.contains(":") 
@@ -160,7 +166,12 @@ public class Main {
         // return document.replaceAll("\\(.*?\\)", "");
     }
     
-    public static TreeMap<Integer, Integer> map() {
+    /**
+     * Map the thing
+     * @param document String thing
+     * @return Map
+     */
+    public static TreeMap<Integer, Integer> map(final String document) {
         String copy = document;
         TreeMap<Integer, Integer> parentheses = new TreeMap<>();
         parentheses.put(0, 0);
@@ -208,5 +219,6 @@ public class Main {
                 }
             }
         }
+        return parentheses;
     }
 }
