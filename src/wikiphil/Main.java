@@ -2,6 +2,7 @@ package wikiphil;
 
 import java.io.IOException;
 import java.util.HashSet;
+import java.util.TreeMap;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -56,24 +57,7 @@ public class Main {
             Elements bodyStuff = current.select("div#bodyContent");
             Elements parags = bodyStuff.select("p");
             Element toGo = null;
-            System.out.println(parags.select("a[href]"));
             if(parags.select("a[href]").isEmpty()) {
-                outer: for (Element parag : parags) {
-                    Document p = Jsoup.parse(parse(parag.outerHtml()));
-                    Elements links = p.select("a[href]");
-                    if(links.isEmpty()) continue;
-                    for(Element link : links) {
-                        String linkHref = link.attr("href");
-                        if(!"".equals(linkHref) && 
-                                !linkHref.contains("#") && !linkHref.contains(":") 
-                                && !linkHref.contains("redlink") && 
-                                !linkHref.contains("upload.wikimedia.org")) {
-                            toGo = link;
-                            break outer;
-                        }
-                    }
-                }
-            } else {
                 Elements listElements = bodyStuff.select("li");
                 outer: for(Element listElement: listElements) {
                     Document li = Jsoup.parse(parse(listElement.outerHtml()));
@@ -81,7 +65,7 @@ public class Main {
                     if(links.isEmpty()) continue;
                     for(Element link : links) {
                         String linkHref = link.attr("href");
-                        if(!linkHref.contains("#") && !linkHref.contains(":") 
+                        if(!linkHref.contains("#") && !linkHref.contains(":")
                                 && !linkHref.contains("redlink") && 
                                 !linkHref.contains("upload.wikimedia.org")) {
                             toGo = link;
@@ -89,40 +73,27 @@ public class Main {
                         }
                     }
                 }
-            }
-            /*Elements links = parags.select("a[href]");
-            Element toGo = null;
-            if(links.isEmpty()) {
-                Elements listLinks = bodyStuff.select("li").select("a[href]");
-                for(Element listLink : listLinks) {
-                    String linkHref = listLink.attr("href");
-                    if(!linkHref.contains("#") && !linkHref.contains(":") 
-                            && !linkHref.contains("redlink") && 
-                            !linkHref.contains("upload.wikimedia.org")) {
-                        toGo = listLink;
-                        break;
-                    }
-                }
             } else {
-                for(Element link : links) {
-                    String linkHref = link.attr("href");
-                    if(!"".equals(linkHref) && 
-                            !linkHref.contains("#") && !linkHref.contains(":") 
-                            && !linkHref.contains("redlink") && 
-                            !linkHref.contains("upload.wikimedia.org")) {
-                        toGo = link;
-                        break;
+                outer: for (Element parag : parags) {
+                    Document p = Jsoup.parse(parse(parag.outerHtml()));
+                    Elements links = p.select("a[href]");
+                    if(links.isEmpty()) continue;
+                    for(Element link : links) {
+                        String linkHref = link.attr("href");
+                        if(!"".equals(linkHref) &&
+                                !linkHref.contains("#") && !linkHref.contains(":") 
+                                && !linkHref.contains("redlink") &&
+                                !linkHref.contains("upload.wikimedia.org")) {
+                            toGo = link;
+                            break outer;
+                        }
                     }
                 }
-            }*/
+            }
             if(toGo == null) {
                 System.err.println("AAAAAAAAAAAAAAAAAAAAAAAA\n");
                 return;
             }
-            /*current = Jsoup.parse(parse(
-                            Jsoup.connect(
-                    "https://en.wikipedia.org" + toGo.attr("href"))
-                .get().outerHtml()));*/
             current = Jsoup.connect(
                     "https://en.wikipedia.org" + toGo.attr("href")).get();
         }
@@ -130,13 +101,112 @@ public class Main {
         System.out.println("Got to Philosophy! " + title.text() + "\n");
     }
     
-    public static String parse(String document) {
-        /*String[] data = document.split("\\(.*?\\)");
-        String total = "";
-        for (String string : data) {
-            total += string;
+    /**
+     * Parses a document
+     * @param document the String representation of the document
+     * @return a parsed document
+     * @deprecated don't use this
+     */
+    public static String parse(final String document) {
+        String copy = document;
+        TreeMap<Integer, Integer> parentheses = new TreeMap<>();
+        parentheses.put(0, 0);
+        int open = 0, close = 0, add = 0;
+        while(open >= 0 || close >= 0) {
+            open = copy.indexOf("("); 
+            close = copy.indexOf(")");
+            if(open == -1) {
+                if(close == -1) {
+                    // nothing works
+                    break;
+                } else {
+                    // only closing
+                    // temp = close;
+                    parentheses.put(add + close, 
+                            parentheses.get(parentheses.lastKey()) - 1);
+                    close++;
+                    add += close;
+                    copy = copy.substring(close);
+                }
+            } else {
+                if(close == -1) {
+                    // only opening
+                    // temp = open;
+                    parentheses.put(add + open, 
+                            parentheses.get(parentheses.lastKey()) + 1);
+                    open++;
+                    add += open;
+                    copy = copy.substring(open);
+                } else {
+                    // both
+                    if(open < close) {
+                        parentheses.put(add + open, 
+                                parentheses.get(parentheses.lastKey()) + 1);
+                        open++;
+                        add += open;
+                        copy = copy.substring(open);
+                    } else {
+                        parentheses.put(add + close, 
+                                parentheses.get(parentheses.lastKey()) - 1);
+                        close++;
+                        add += close;
+                        copy = copy.substring(close);
+                    }
+                }
+            }
         }
-        return total;*/
-        return document.replaceAll("\\(.*?\\)", "");
+        System.out.println(parentheses.toString());
+        return document;
+        // return document.replaceAll("\\(.*?\\)", "");
+    }
+    
+    public static TreeMap<Integer, Integer> map() {
+        String copy = document;
+        TreeMap<Integer, Integer> parentheses = new TreeMap<>();
+        parentheses.put(0, 0);
+        int open = 0, close = 0, add = 0;
+        while(open >= 0 || close >= 0) {
+            open = copy.indexOf("("); 
+            close = copy.indexOf(")");
+            if(open == -1) {
+                if(close == -1) {
+                    // nothing works
+                    break;
+                } else {
+                    // only closing
+                    // temp = close;
+                    parentheses.put(add + close, 
+                            parentheses.get(parentheses.lastKey()) - 1);
+                    close++;
+                    add += close;
+                    copy = copy.substring(close);
+                }
+            } else {
+                if(close == -1) {
+                    // only opening
+                    // temp = open;
+                    parentheses.put(add + open, 
+                            parentheses.get(parentheses.lastKey()) + 1);
+                    open++;
+                    add += open;
+                    copy = copy.substring(open);
+                } else {
+                    // both
+                    if(open < close) {
+                        parentheses.put(add + open, 
+                                parentheses.get(parentheses.lastKey()) + 1);
+                        open++;
+                        add += open;
+                        copy = copy.substring(open);
+                    } else {
+                        parentheses.put(add + close, 
+                                parentheses.get(parentheses.lastKey()) - 1);
+                        close++;
+                        add += close;
+                        copy = copy.substring(close);
+                    }
+                }
+            }
+        }
     }
 }
