@@ -24,35 +24,38 @@ public class Main {
             new Thread(() -> {
                 for(int i = 0; i < 10; i++) {
                     try {
-                        run_();
+                        getsToPhilosophy();
                     } catch (IOException ex) {
                         ex.printStackTrace();
                     }
                 }
             }).start();
         }*/
-        for(int i = 0; i < 1; i++) {
-            run_();
-        }
+        /*for(int i = 0; i < 10; i++) {
+            getsToPhilosophy("https://en.wikipedia.org/wiki/Special:Random");
+        }*/
+        System.out.println(getsToPhilosophy(
+                "https://en.wikipedia.org/wiki/Flowering_plant"));
     }
     
     /**
      * Loops through a single random page
+     * @param toConnect the page to connect to
+     * @return whether a random article goes to philosophy
      * @throws IOException if something goes wrong
      */
-    public static void run_() throws IOException {
+    public static boolean getsToPhilosophy(String toConnect) throws IOException {
         HashSet<String> sanity = new HashSet<>();
         /*Document current = Jsoup.parse(parse(Jsoup.connect(
                     "https://en.wikipedia.org/wiki/Special:Random")
                 .get().outerHtml()));*/
         Document current = Jsoup.connect(
-                "https://en.wikipedia.org/wiki/United_States").get();
+                toConnect).get();
         while(!current.title().equals("Philosophy - Wikipedia")) {
             String title = current.selectFirst("h1#firstHeading").text();
             System.out.println(title);
             if(!sanity.add(title)) {
-                System.err.println("Oh noes! We\'re in a loop!\n");
-                return;
+                return false;
             }
             Elements bodyStuff = current.select("div#bodyContent");
             Elements parags = bodyStuff.select("p");
@@ -67,6 +70,9 @@ public class Main {
                     if(links.isEmpty()) continue;
                     for(Element link : links) {
                         if(link.text().equals("Coordinates")) continue outer;
+                        String outer = link.outerHtml();
+                        if(map.get(map.floorKey(temp.indexOf(outer))) != 0) 
+                            continue;
                         String linkHref = link.attr("href");
                         if(!linkHref.contains("#") && !linkHref.contains(":")
                                 && !linkHref.contains("redlink") && 
@@ -85,6 +91,9 @@ public class Main {
                     if(links.isEmpty()) continue;
                     for(Element link : links) {
                         if(link.text().equals("Coordinates")) continue outer;
+                        String outer = link.outerHtml();
+                        if(map.get(map.floorKey(temp.indexOf(outer))) != 0) 
+                            continue;
                         String linkHref = link.attr("href");
                         if(!"".equals(linkHref) &&
                                 !linkHref.contains("#") && !linkHref.contains(":") 
@@ -97,14 +106,12 @@ public class Main {
                 }
             }
             if(toGo == null) {
-                System.err.println("AAAAAAAAAAAAAAAAAAAAAAAA\n");
-                return;
+                return false;
             }
             current = Jsoup.connect(
                     "https://en.wikipedia.org" + toGo.attr("href")).get();
         }
-        Element title = current.selectFirst("h1#firstHeading");
-        System.out.println("Got to Philosophy! " + title.text() + "\n");
+        return true;
     }
     
     /**
@@ -161,7 +168,6 @@ public class Main {
                 }
             }
         }
-        System.out.println(parentheses.toString());
         return document;
         // return document.replaceAll("\\(.*?\\)", "");
     }
