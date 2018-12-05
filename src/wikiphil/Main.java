@@ -42,7 +42,7 @@ public class Main {
     /**
      * Loops through a single random page
      * @param toConnect the page to connect to
-     * @return whether a random article goes to philosophy
+     * @return how many hops to Philosophy, -1 if it doesn't
      * @throws IOException if something goes wrong
      */
     public static int hopsToPhilosophy(String toConnect) throws IOException {
