@@ -24,18 +24,19 @@ public class Main {
             new Thread(() -> {
                 for(int i = 0; i < 10; i++) {
                     try {
-                        getsToPhilosophy();
+                        hopsToPhilosophy();
                     } catch (IOException ex) {
                         ex.printStackTrace();
                     }
                 }
             }).start();
         }*/
-        /*for(int i = 0; i < 10; i++) {
-            getsToPhilosophy("https://en.wikipedia.org/wiki/Special:Random");
-        }*/
-        System.out.println(getsToPhilosophy(
-                "https://en.wikipedia.org/wiki/Flowering_plant"));
+        for(int i = 0; i < 10; i++) {
+            System.out.println(hopsToPhilosophy(
+                    "https://en.wikipedia.org/wiki/Special:Random") + " hops");
+        }
+//        System.out.println(hopsToPhilosophy(
+//                "https://en.wikipedia.org/wiki/Amadou_Koïta"));
     }
     
     /**
@@ -44,18 +45,21 @@ public class Main {
      * @return whether a random article goes to philosophy
      * @throws IOException if something goes wrong
      */
-    public static boolean getsToPhilosophy(String toConnect) throws IOException {
+    public static int hopsToPhilosophy(String toConnect) throws IOException {
         HashSet<String> sanity = new HashSet<>();
         /*Document current = Jsoup.parse(parse(Jsoup.connect(
                     "https://en.wikipedia.org/wiki/Special:Random")
                 .get().outerHtml()));*/
         Document current = Jsoup.connect(
                 toConnect).get();
+        String title_ = current.selectFirst("h1#firstHeading").text();
+        System.out.print(title_ + ": ");
+        int output = 0;
         while(!current.title().equals("Philosophy - Wikipedia")) {
             String title = current.selectFirst("h1#firstHeading").text();
-            System.out.println(title);
+            // System.out.println(title);
             if(!sanity.add(title)) {
-                return false;
+                return -1;
             }
             Elements bodyStuff = current.select("div#bodyContent");
             Elements parags = bodyStuff.select("p");
@@ -69,7 +73,8 @@ public class Main {
                     Elements links = li.select("a[href]");
                     if(links.isEmpty()) continue;
                     for(Element link : links) {
-                        if(link.text().equals("Coordinates")) continue outer;
+                        if(link.parent().is("span#coordinates")) 
+                            continue outer;
                         String outer = link.outerHtml();
                         if(map.get(map.floorKey(temp.indexOf(outer))) != 0) 
                             continue;
@@ -90,7 +95,8 @@ public class Main {
                     Elements links = p.select("a[href]");
                     if(links.isEmpty()) continue;
                     for(Element link : links) {
-                        if(link.text().equals("Coordinates")) continue outer;
+                        if(link.parent().is("span#coordinates")) 
+                            continue outer;
                         String outer = link.outerHtml();
                         if(map.get(map.floorKey(temp.indexOf(outer))) != 0) 
                             continue;
@@ -106,12 +112,13 @@ public class Main {
                 }
             }
             if(toGo == null) {
-                return false;
+                return -1;
             }
             current = Jsoup.connect(
                     "https://en.wikipedia.org" + toGo.attr("href")).get();
+            output++;
         }
-        return true;
+        return output;
     }
     
     /**
