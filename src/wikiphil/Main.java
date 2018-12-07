@@ -19,7 +19,7 @@ public class Main {
      * @throws java.io.IOException AAAAAAAAAAAAAAAAAAAAs
      */
     public static void main(String[] args) throws IOException {
-        final int cores = Runtime.getRuntime().availableProcessors(), 
+        /*final int cores = Runtime.getRuntime().availableProcessors(), 
                 aaa = 100 / cores;
         for(int z = 0;z<cores;z++) {
             new Thread(() -> {
@@ -39,18 +39,18 @@ public class Main {
                     }
                 }
             }).start();
-        }
-        /*for(int i = 0; i < 100; i++) {
+        }*/
+        for(int i = 0; i < 100; i++) {
             double start = System.nanoTime();
             Document tempD = Jsoup.connect(
                     "https://en.wikipedia.org/wiki/Special:Random").get();
             String temp = tempD.selectFirst("h1#firstHeading").text() + 
                     ": " + hopsToPhilosophy(
                     tempD.location()) + " hops";
-            System.out.printf("%-75s", temp);
+            System.out.printf("%-100s", temp);
             double total = System.nanoTime() - start;
             System.out.printf("%.4fms%n", total/1000000);
-        }*/
+        }
         // traceToPhilosophy("https://en.wikipedia.org/wiki/Selborne_Graving_Dock");
     }
     
@@ -72,9 +72,9 @@ public class Main {
             String title = current.selectFirst("h1#firstHeading").text();
             // System.out.println(title);
             if(!sanity.add(title)) {
-                if(title.equals("Existence") || title.equals("Reality"))
-                    return -2;
-                return -1;
+                /*if(title.equals("Existence") || title.equals("Reality"))
+                    return -2;*/
+                return -output-1;
             }
             Elements bodyStuff = current.select("div#bodyContent");
             Elements parags = bodyStuff.select("p");
@@ -129,7 +129,7 @@ public class Main {
                 }
             }
             if(toGo == null) {
-                return -3;
+                return -output-1;
             }
             current = Jsoup.connect(
                     "https://en.wikipedia.org" + toGo.attr("href")).get();
