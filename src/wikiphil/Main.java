@@ -40,7 +40,7 @@ public class Main {
                 }
             }).start();
         }*/
-        for(int i = 0; i < 100; i++) {
+        /*for(int i = 0; i < 100; i++) {
             double start = System.nanoTime();
             Document tempD = Jsoup.connect(
                     "https://en.wikipedia.org/wiki/Special:Random").get();
@@ -50,8 +50,8 @@ public class Main {
             System.out.printf("%-100s", temp);
             double total = System.nanoTime() - start;
             System.out.printf("%.4fms%n", total/1000000);
-        }
-        // traceToPhilosophy("https://en.wikipedia.org/wiki/Selborne_Graving_Dock");
+        }*/
+        traceToPhilosophy("https://en.wikipedia.org/wiki/State_governments_of_India");
     }
     
     /**
@@ -177,6 +177,7 @@ public class Main {
                                 && !linkHref.contains("redlink") && 
                                 !linkHref.contains("upload.wikimedia.org")) {
                             toGo = link;
+                            System.out.println(link.parents().select("div"));
                             break outer;
                         }
                     }
@@ -202,6 +203,7 @@ public class Main {
                                 && !linkHref.contains("redlink") &&
                                 !linkHref.contains("upload.wikimedia.org")) {
                             toGo = link;
+                            System.out.println(link.parents());
                             break outer;
                         }
                     }
@@ -282,8 +284,8 @@ public class Main {
         String copy = document;
         TreeMap<Integer, Integer> parentheses = new TreeMap<>();
         parentheses.put(0, 0);
-        int open = 0, close = 0, add = 0;
-        while(open >= 0 || close >= 0) {
+        int open, close, add = 0;
+        for(;;) {
             open = copy.indexOf("("); 
             close = copy.indexOf(")");
             if(open == -1) {
