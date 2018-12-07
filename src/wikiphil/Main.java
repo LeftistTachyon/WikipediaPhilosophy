@@ -31,12 +31,18 @@ public class Main {
                 }
             }).start();
         }*/
-        for(int i = 0; i < 10; i++) {
-            System.out.println(hopsToPhilosophy(
-                    "https://en.wikipedia.org/wiki/Special:Random") + " hops");
-        }
-//        System.out.println(hopsToPhilosophy(
-//                "https://en.wikipedia.org/wiki/Amadou_Koïta"));
+        /*for(int i = 0; i < 10; i++) {
+            double start = System.nanoTime();
+            Document tempD = Jsoup.connect(
+                    "https://en.wikipedia.org/wiki/Special:Random").get();
+            String temp = tempD.selectFirst("h1#firstHeading").text() + 
+                    ": " + hopsToPhilosophy(
+                    tempD.location()) + " hops";
+            System.out.printf("%-75s", temp);
+            double total = System.nanoTime() - start;
+            System.out.printf("%.4fms%n", total/1000000);
+        }*/
+        traceToPhilosophy("https://en.wikipedia.org/wiki/Selborne_Graving_Dock");
     }
     
     /**
@@ -52,13 +58,13 @@ public class Main {
                 .get().outerHtml()));*/
         Document current = Jsoup.connect(
                 toConnect).get();
-        String title_ = current.selectFirst("h1#firstHeading").text();
-        System.out.print(title_ + ": ");
         int output = 0;
         while(!current.title().equals("Philosophy - Wikipedia")) {
             String title = current.selectFirst("h1#firstHeading").text();
             // System.out.println(title);
             if(!sanity.add(title)) {
+                if(title.equals("Existence") || title.equals("Reality"))
+                    System.out.println("Exited due to E-R loop");
                 return -1;
             }
             Elements bodyStuff = current.select("div#bodyContent");
@@ -89,6 +95,8 @@ public class Main {
                 }
             } else {
                 outer: for (Element parag : parags) {
+                    if(parag.parent().tagName().equals("td")) 
+                        continue;
                     String temp = parag.outerHtml();
                     TreeMap<Integer, Integer> map = map(temp);
                     Document p = Jsoup.parse(temp);
@@ -119,6 +127,83 @@ public class Main {
             output++;
         }
         return output;
+    }
+    
+    /**
+     * Traces an article to philosophy, for debugging purposes
+     * @param toConnect the article to connect to
+     * @throws IOException if something goes wrong
+     */
+    public static void traceToPhilosophy(String toConnect) throws IOException {
+        HashSet<String> sanity = new HashSet<>();
+        Document current = Jsoup.connect(
+                toConnect).get();
+        while(!current.title().equals("Philosophy - Wikipedia")) {
+            String title = current.selectFirst("h1#firstHeading").text();
+            System.out.println(title);
+            if(!sanity.add(title)) {
+                if(title.equals("Existence") || title.equals("Reality"))
+                    System.out.println("Exited due to E-R loop");
+                return;
+            }
+            Elements bodyStuff = current.select("div#bodyContent");
+            Elements parags = bodyStuff.select("p");
+            Element toGo = null;
+            if(parags.select("a[href]").isEmpty()) {
+                Elements listElements = bodyStuff.select("li");
+                outer: for(Element listElement: listElements) {
+                    String temp = listElement.outerHtml();
+                    TreeMap<Integer, Integer> map = map(temp);
+                    Document li = Jsoup.parse(temp);
+                    Elements links = li.select("a[href]");
+                    if(links.isEmpty()) continue;
+                    for(Element link : links) {
+                        if(link.parent().is("span#coordinates")) 
+                            continue outer;
+                        String outer = link.outerHtml();
+                        if(map.get(map.floorKey(temp.indexOf(outer))) != 0) 
+                            continue;
+                        String linkHref = link.attr("href");
+                        if(!linkHref.contains("#") && !linkHref.contains(":")
+                                && !linkHref.contains("redlink") && 
+                                !linkHref.contains("upload.wikimedia.org")) {
+                            toGo = link;
+                            break outer;
+                        }
+                    }
+                }
+            } else {
+                outer: for (Element parag : parags) {
+                    if(parag.parent().tagName().equals("td")) 
+                        continue;
+                    String temp = parag.outerHtml();
+                    TreeMap<Integer, Integer> map = map(temp);
+                    Document p = Jsoup.parse(temp);
+                    Elements links = p.select("a[href]");
+                    if(links.isEmpty()) continue;
+                    for(Element link : links) {
+                        if(link.parent().is("span#coordinates")) 
+                            continue outer;
+                        String outer = link.outerHtml();
+                        if(map.get(map.floorKey(temp.indexOf(outer))) != 0) 
+                            continue;
+                        String linkHref = link.attr("href");
+                        if(!"".equals(linkHref) &&
+                                !linkHref.contains("#") && !linkHref.contains(":") 
+                                && !linkHref.contains("redlink") &&
+                                !linkHref.contains("upload.wikimedia.org")) {
+                            toGo = link;
+                            break outer;
+                        }
+                    }
+                }
+            }
+            if(toGo == null) {
+                return;
+            }
+            current = Jsoup.connect(
+                    "https://en.wikipedia.org" + toGo.attr("href")).get();
+        }
     }
     
     /**
