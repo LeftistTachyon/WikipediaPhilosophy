@@ -33,25 +33,42 @@ public class Main {
                                 tempD.location()) + " hops";
                         System.out.printf("%-75s", temp);
                         double total = System.nanoTime() - start;
-                        System.out.printf("%.4fms%n", total/1000000);
+                        System.out.printf("%.4f ms%n", total/1000000);
                     } catch (IOException ex) {
                         ex.printStackTrace();
                     }
                 }
             }).start();
         }*/
-        for(int i = 0; i < 100; i++) {
+        
+        final int pagesToVisit = 10;
+        double avgTime = 0;
+        int max = -1;
+        String title = null;
+        for(int i = 0; i < pagesToVisit; i++) {
             double start = System.nanoTime();
             Document tempD = Jsoup.connect(
                     "https://en.wikipedia.org/wiki/Special:Random").get();
-            String temp = tempD.selectFirst("h1#firstHeading").text() + 
-                    ": " + forceToPhilosophy(
-                    tempD.location()) + " hops";
-            System.out.printf("%-100s", temp);
+            int hops = forceToPhilosophy(
+                    tempD.location());
+            String temp = tempD.selectFirst("h1#firstHeading").text();
+            if(hops > max) {
+                max = hops;
+                title = temp;
+            }
+            System.out.printf("%-100s", temp + 
+                    ": " + hops + " hops");
             double total = System.nanoTime() - start;
-            System.out.printf("%.4fms%n", total/1000000);
+            System.out.printf("%.3f ms%n", total/=1000000);
+            avgTime += total;
         }
-        // traceToPhilosophy("https://en.wikipedia.org/wiki/State_governments_of_India");
+        System.out.printf("%nMax hops: %d hops - %s%n", max, title);
+        System.out.printf("Avg time: %.3f ms%n", avgTime/pagesToVisit);
+        
+        /*double start = System.nanoTime();
+        traceToPhilosophy("https://en.wikipedia.org/wiki/England");
+        double total = System.nanoTime() - start;
+        System.out.printf("%nTotal:\t%.3f ms%n", total/1000000);*/
     }
     
     /**
@@ -76,6 +93,11 @@ public class Main {
                     return -2;*/
                 return -output-1;
             }
+            
+            String fullHTML = current.html();
+            TreeMap<Integer, Integer> tableMap = map(fullHTML, 
+                    "<table","</table");
+            
             Elements bodyStuff = current.select("div#bodyContent");
             Elements parags = bodyStuff.select("p");
             Element toGo = null;
@@ -91,7 +113,8 @@ public class Main {
                         if(link.parent().is("span#coordinates")) 
                             continue outer;
                         String outer = link.outerHtml();
-                        if(map.get(map.floorKey(temp.indexOf(outer))) != 0) 
+                        if(map.get(map.floorKey(temp.indexOf(outer))) != 0 || 
+                                tableMap.get(tableMap.floorKey(fullHTML.indexOf(outer))) != 0) 
                             continue;
                         String linkHref = link.attr("href");
                         if(!linkHref.contains("#") && !linkHref.contains(":")
@@ -104,8 +127,6 @@ public class Main {
                 }
             } else {
                 outer: for (Element parag : parags) {
-                    if(parag.parent().tagName().equals("td")) 
-                        continue;
                     String temp = parag.outerHtml();
                     TreeMap<Integer, Integer> map = map(temp);
                     Document p = Jsoup.parse(temp);
@@ -115,7 +136,8 @@ public class Main {
                         if(link.parent().is("span#coordinates")) 
                             continue outer;
                         String outer = link.outerHtml();
-                        if(map.get(map.floorKey(temp.indexOf(outer))) != 0) 
+                        if(map.get(map.floorKey(temp.indexOf(outer))) != 0 || 
+                                tableMap.get(tableMap.floorKey(fullHTML.indexOf(outer))) != 0) 
                             continue;
                         String linkHref = link.attr("href");
                         if(!"".equals(linkHref) &&
@@ -144,10 +166,15 @@ public class Main {
      * @throws IOException if something goes wrong
      */
     public static void traceToPhilosophy(String toConnect) throws IOException {
+        double start, total;
+        start = System.nanoTime();
         HashSet<String> sanity = new HashSet<>();
         Document current = Jsoup.connect(
                 toConnect).get();
+        total = System.nanoTime() - start;
+        System.out.printf("Connect:\t%.3f ms%n%n", total/1000000);
         while(!current.title().equals("Philosophy - Wikipedia")) {
+            start = System.nanoTime();
             String title = current.selectFirst("h1#firstHeading").text();
             System.out.println(title);
             if(!sanity.add(title)) {
@@ -155,6 +182,11 @@ public class Main {
                     System.out.println("Exited due to E-R loop");
                 return;
             }
+            
+            String fullHTML = current.html();
+            TreeMap<Integer, Integer> tableMap = map(fullHTML, 
+                    "<table","</table");
+            
             Elements bodyStuff = current.select("div#bodyContent");
             Elements parags = bodyStuff.select("p");
             Element toGo = null;
@@ -170,14 +202,14 @@ public class Main {
                         if(link.parent().is("span#coordinates")) 
                             continue outer;
                         String outer = link.outerHtml();
-                        if(map.get(map.floorKey(temp.indexOf(outer))) != 0) 
+                        if(map.get(map.floorKey(temp.indexOf(outer))) != 0 || 
+                                tableMap.get(tableMap.floorKey(fullHTML.indexOf(outer))) != 0) 
                             continue;
                         String linkHref = link.attr("href");
                         if(!linkHref.contains("#") && !linkHref.contains(":")
                                 && !linkHref.contains("redlink") && 
                                 !linkHref.contains("upload.wikimedia.org")) {
                             toGo = link;
-                            System.out.println(link.parents());
                             break outer;
                         }
                     }
@@ -195,7 +227,8 @@ public class Main {
                         if(link.parent().is("span#coordinates")) 
                             continue outer;
                         String outer = link.outerHtml();
-                        if(map.get(map.floorKey(temp.indexOf(outer))) != 0) 
+                        if(map.get(map.floorKey(temp.indexOf(outer))) != 0 || 
+                                tableMap.get(tableMap.floorKey(fullHTML.indexOf(outer))) != 0) 
                             continue;
                         String linkHref = link.attr("href");
                         if(!"".equals(linkHref) &&
@@ -203,10 +236,6 @@ public class Main {
                                 && !linkHref.contains("redlink") &&
                                 !linkHref.contains("upload.wikimedia.org")) {
                             toGo = link;
-                            for(Element parent : toGo.parents()) {
-                                System.out.print(parent.nodeName() + " ");
-                            }
-                            System.out.println();
                             break outer;
                         }
                     }
@@ -215,8 +244,13 @@ public class Main {
             if(toGo == null) {
                 return;
             }
+            total = System.nanoTime() - start;
+            System.out.printf("Decision:\t%.3f ms%n", total/1000000);
+            start = System.nanoTime();
             current = Jsoup.connect(
                     "https://en.wikipedia.org" + toGo.attr("href")).get();
+            total = System.nanoTime() - start;
+            System.out.printf("Reconnect:\t%.3f ms%n%n", total/1000000);
         }
     }
     
@@ -253,6 +287,11 @@ public class Main {
                     return -2;*/
                 return -hops-1;
             }
+            
+            String fullHTML = current.html();
+            TreeMap<Integer, Integer> tableMap = map(fullHTML, 
+                    "<table","</table");
+            
             Elements bodyStuff = current.select("div#bodyContent");
             Elements parags = bodyStuff.select("p");
             if(parags.select("a[href]").isEmpty()) {
@@ -267,7 +306,8 @@ public class Main {
                         if(link.parent().is("span#coordinates")) 
                             continue outer;
                         String outer = link.outerHtml();
-                        if(map.get(map.floorKey(temp.indexOf(outer))) != 0) 
+                        if(map.get(map.floorKey(temp.indexOf(outer))) != 0 || 
+                                tableMap.get(tableMap.floorKey(fullHTML.indexOf(outer))) != 0) 
                             continue;
                         String linkHref = link.attr("href");
                         if(!linkHref.contains("#") && !linkHref.contains(":")
@@ -295,7 +335,8 @@ public class Main {
                         if(link.parent().is("span#coordinates")) 
                             continue outer;
                         String outer = link.outerHtml();
-                        if(map.get(map.floorKey(temp.indexOf(outer))) != 0) 
+                        if(map.get(map.floorKey(temp.indexOf(outer))) != 0 || 
+                                tableMap.get(tableMap.floorKey(fullHTML.indexOf(outer))) != 0) 
                             continue;
                         String linkHref = link.attr("href");
                         if(!"".equals(linkHref) &&
@@ -381,13 +422,25 @@ public class Main {
      * @return Map
      */
     public static TreeMap<Integer, Integer> map(final String document) {
+        return map(document, "(", ")");
+    }
+    
+    /**
+     * Map the thing
+     * @param document String thing
+     * @param openS the opening symbol
+     * @param closeS the closing symbol
+     * @return Map
+     */
+    public static TreeMap<Integer, Integer> map(final String document, 
+            final String openS, final String closeS) {
         String copy = document;
         TreeMap<Integer, Integer> parentheses = new TreeMap<>();
         parentheses.put(0, 0);
         int open, close, add = 0, in = 0;
         for(;;) {
-            open = copy.indexOf("("); 
-            close = copy.indexOf(")");
+            open = copy.indexOf(openS); 
+            close = copy.indexOf(closeS);
             if(open == -1) {
                 if(close == -1) {
                     // nothing works
