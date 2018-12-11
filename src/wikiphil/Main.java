@@ -98,9 +98,7 @@ public class Main {
                 return -output-1;
             }
             
-            String fullHTML = current.html();
-            TreeMap<Integer, Integer> tableMap = map(fullHTML, 
-                    "<table","</table");
+            current.select("table").remove();
             
             Elements bodyStuff = current.select("div#bodyContent");
             Elements parags = bodyStuff.select("p");
@@ -109,6 +107,7 @@ public class Main {
                 Elements listElements = bodyStuff.select("li");
                 outer: for(Element listElement: listElements) {
                     String temp = listElement.outerHtml();
+                    temp = temp.replaceAll("(<b>|</b>)", "");
                     TreeMap<Integer, Integer> map = map(temp);
                     Document li = Jsoup.parse(temp);
                     Elements links = li.select("a[href]");
@@ -117,9 +116,6 @@ public class Main {
                         if(link.parent().is("span#coordinates")) 
                             continue outer;
                         String outer = link.outerHtml();
-                        if(tableMap.get(tableMap.floorKey(fullHTML.indexOf(
-                                outer))) != 0)
-                            continue outer;
                         if(map.get(map.floorKey(temp.indexOf(outer))) != 0) 
                             continue;
                         String linkHref = link.attr("href");
@@ -134,6 +130,7 @@ public class Main {
             } else {
                 outer: for (Element parag : parags) {
                     String temp = parag.outerHtml();
+                    temp = temp.replaceAll("(<b>|</b>)", "");
                     TreeMap<Integer, Integer> map = map(temp);
                     Document p = Jsoup.parse(temp);
                     Elements links = p.select("a[href]");
@@ -142,9 +139,6 @@ public class Main {
                         if(link.parent().is("span#coordinates")) 
                             continue outer;
                         String outer = link.outerHtml();
-                        if(tableMap.get(tableMap.floorKey(fullHTML.indexOf(
-                                outer))) != 0)
-                            continue outer;
                         if(map.get(map.floorKey(temp.indexOf(outer))) != 0) 
                             continue;
                         String linkHref = link.attr("href");
@@ -161,6 +155,7 @@ public class Main {
                     Elements listElements = bodyStuff.select("li");
                     outer: for(Element listElement: listElements) {
                         String temp = listElement.outerHtml();
+                    temp = temp.replaceAll("(<b>|</b>)", "");
                         TreeMap<Integer, Integer> map = map(temp);
                         Document li = Jsoup.parse(temp);
                         Elements links = li.select("a[href]");
@@ -169,9 +164,6 @@ public class Main {
                             if(link.parent().is("span#coordinates")) 
                                 continue outer;
                             String outer = link.outerHtml();
-                            if(tableMap.get(tableMap.floorKey(fullHTML.indexOf(
-                                    outer))) != 0)
-                                continue outer;
                             if(map.get(map.floorKey(temp.indexOf(outer))) != 0) 
                                 continue;
                             String linkHref = link.attr("href");
@@ -221,9 +213,7 @@ public class Main {
                 return;
             }
             
-            String fullHTML = current.html();
-            TreeMap<Integer, Integer> tableMap = map(fullHTML, 
-                    "<table","</table");
+            current.select("table").remove();
             
             Elements bodyStuff = current.select("div#bodyContent");
             Elements parags = bodyStuff.select("p");
@@ -232,6 +222,7 @@ public class Main {
                 Elements listElements = bodyStuff.select("li");
                 outer: for(Element listElement: listElements) {
                     String temp = listElement.outerHtml();
+                    temp = temp.replaceAll("(<b>|</b>)", "");
                     TreeMap<Integer, Integer> map = map(temp);
                     Document li = Jsoup.parse(temp);
                     Elements links = li.select("a[href]");
@@ -240,9 +231,6 @@ public class Main {
                         if(link.parent().is("span#coordinates")) 
                             continue outer;
                         String outer = link.outerHtml();
-                        if(tableMap.get(tableMap.floorKey(fullHTML.indexOf(
-                                outer))) != 0)
-                            continue outer;
                         if(map.get(map.floorKey(temp.indexOf(outer))) != 0) 
                             continue;
                         String linkHref = link.attr("href");
@@ -259,6 +247,7 @@ public class Main {
                     if(parag.parent().tagName().equals("td")) 
                         continue;
                     String temp = parag.outerHtml();
+                    temp = temp.replaceAll("(<b>|</b>)", "");
                     TreeMap<Integer, Integer> map = map(temp);
                     Document p = Jsoup.parse(temp);
                     Elements links = p.select("a[href]");
@@ -267,9 +256,6 @@ public class Main {
                         if(link.parent().is("span#coordinates")) 
                             continue outer;
                         String outer = link.outerHtml();
-                        if(tableMap.get(tableMap.floorKey(fullHTML.indexOf(
-                                outer))) != 0)
-                            continue outer;
                         System.out.println(links);
                         if(map.get(map.floorKey(temp.indexOf(outer))) != 0) 
                             continue;
@@ -287,6 +273,7 @@ public class Main {
                     Elements listElements = bodyStuff.select("li");
                     outer: for(Element listElement: listElements) {
                         String temp = listElement.outerHtml();
+                        temp = temp.replaceAll("(<b>|</b>)", "");
                         TreeMap<Integer, Integer> map = map(temp);
                         Document li = Jsoup.parse(temp);
                         Elements links = li.select("a[href]");
@@ -295,9 +282,6 @@ public class Main {
                             if(link.parent().is("span#coordinates")) 
                                 continue outer;
                             String outer = link.outerHtml();
-                            if(tableMap.get(tableMap.floorKey(fullHTML.indexOf(
-                                    outer))) != 0)
-                                continue outer;
                             if(map.get(map.floorKey(temp.indexOf(outer))) != 0) 
                                 continue;
                             String linkHref = link.attr("href");
@@ -363,9 +347,7 @@ public class Main {
                 return -hops-1;
             }
             
-            String fullHTML = current.html();
-            TreeMap<Integer, Integer> tableMap = map(fullHTML, 
-                    "<table","</table");
+            current.select("table").remove();
             
             Elements bodyStuff = current.select("div#bodyContent");
             Elements parags = bodyStuff.select("p");
@@ -373,6 +355,7 @@ public class Main {
                 Elements listElements = bodyStuff.select("li");
                 outer: for(Element listElement: listElements) {
                     String temp = listElement.outerHtml();
+                    temp = temp.replaceAll("(<b>|</b>)", "");
                     TreeMap<Integer, Integer> map = map(temp);
                     Document li = Jsoup.parse(temp);
                     Elements links = li.select("a[href]");
@@ -381,9 +364,6 @@ public class Main {
                         if(link.parent().is("span#coordinates")) 
                             continue outer;
                         String outer = link.outerHtml();
-                        if(tableMap.get(tableMap.floorKey(fullHTML.indexOf(
-                                outer))) != 0)
-                            continue outer;
                         if(map.get(map.floorKey(temp.indexOf(outer))) != 0) 
                             continue;
                         String linkHref = link.attr("href");
@@ -404,6 +384,7 @@ public class Main {
                     if(parag.parent().tagName().equals("td")) 
                         continue;
                     String temp = parag.outerHtml();
+                    temp = temp.replaceAll("(<b>|</b>)", "");
                     TreeMap<Integer, Integer> map = map(temp);
                     Document p = Jsoup.parse(temp);
                     Elements links = p.select("a[href]");
@@ -412,9 +393,6 @@ public class Main {
                         if(link.parent().is("span#coordinates")) 
                             continue outer;
                         String outer = link.outerHtml();
-                        if(tableMap.get(tableMap.floorKey(fullHTML.indexOf(
-                                outer))) != 0)
-                            continue outer;
                         if(map.get(map.floorKey(temp.indexOf(outer))) != 0) 
                             continue;
                         String linkHref = link.attr("href");
@@ -434,6 +412,7 @@ public class Main {
                 Elements listElements = bodyStuff.select("li");
                 outer: for(Element listElement: listElements) {
                     String temp = listElement.outerHtml();
+                    temp = temp.replaceAll("(<b>|</b>)", "");
                     TreeMap<Integer, Integer> map = map(temp);
                     Document li = Jsoup.parse(temp);
                     Elements links = li.select("a[href]");
@@ -442,9 +421,6 @@ public class Main {
                         if(link.parent().is("span#coordinates")) 
                             continue outer;
                         String outer = link.outerHtml();
-                        if(tableMap.get(tableMap.floorKey(fullHTML.indexOf(
-                                outer))) != 0)
-                            continue outer;
                         if(map.get(map.floorKey(temp.indexOf(outer))) != 0) 
                             continue;
                         String linkHref = link.attr("href");
