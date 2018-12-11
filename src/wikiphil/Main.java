@@ -45,7 +45,7 @@ public class Main {
         }*/
 
         // the number of pages to try to get to philosophy from
-        /*final int pagesToVisit = 100;
+        final int pagesToVisit = 100;
         double avgTime = 0;
         int max = -1, toPhil = 0;
         String title = null;
@@ -70,12 +70,13 @@ public class Main {
         System.out.printf("%nMax hops: %d hops - %s%n", max, title);
         System.out.printf("Avg time: %.3f ms%n", avgTime/pagesToVisit);
         System.out.printf("%% to philosophy: %.2f%%%n", 
-                ((double)toPhil*100)/pagesToVisit);*/
-        double start = System.nanoTime();
+                ((double)toPhil*100)/pagesToVisit);
+        
+        /*double start = System.nanoTime();
         traceToPhilosophy("https://en.wikipedia.org/wiki/Countries_in_the_International_Organization_for_Standardization");
         // also 2018–19 Hamburger SV season
         double total = System.nanoTime() - start;
-        System.out.printf("%nTotal:\t%.3f ms%n", total / 1000000);
+        System.out.printf("%nTotal:\t%.3f ms%n", total / 1000000);*/
     }
 
     /**
