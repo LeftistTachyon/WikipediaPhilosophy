@@ -41,7 +41,8 @@ public class Main {
             }).start();
         }*/
         
-        /*final int pagesToVisit = 10;
+        // the number of pages to try to get to philosophy from
+        final int pagesToVisit = 100;
         double avgTime = 0;
         int max = -1, toPhil = 0;
         String title = null;
@@ -66,13 +67,13 @@ public class Main {
         System.out.printf("%nMax hops: %d hops - %s%n", max, title);
         System.out.printf("Avg time: %.3f ms%n", avgTime/pagesToVisit);
         System.out.printf("%% to philosophy: %.2f%%%n", 
-                ((double)toPhil*100)/pagesToVisit);*/
+                ((double)toPhil*100)/pagesToVisit);
         
-        double start = System.nanoTime();
+        /*double start = System.nanoTime();
         traceToPhilosophy("https://en.wikipedia.org/wiki/2018–19_Hamburger_SV_season");
         // also 2018–19 Hamburger SV season
         double total = System.nanoTime() - start;
-        System.out.printf("%nTotal:\t%.3f ms%n", total/1000000);
+        System.out.printf("%nTotal:\t%.3f ms%n", total/1000000);*/
     }
     
     /**
@@ -107,7 +108,8 @@ public class Main {
                 Elements listElements = bodyStuff.select("li");
                 outer: for(Element listElement: listElements) {
                     String temp = listElement.outerHtml();
-                    temp = temp.replaceAll("(<b>|</b>)", "");
+                    temp = temp.replace("<br>", ""); 
+                    temp = temp.replace("</br>", "");
                     TreeMap<Integer, Integer> map = map(temp);
                     Document li = Jsoup.parse(temp);
                     Elements links = li.select("a[href]");
@@ -130,7 +132,8 @@ public class Main {
             } else {
                 outer: for (Element parag : parags) {
                     String temp = parag.outerHtml();
-                    temp = temp.replaceAll("(<b>|</b>)", "");
+                    temp = temp.replace("<br>", ""); 
+                    temp = temp.replace("</br>", "");
                     TreeMap<Integer, Integer> map = map(temp);
                     Document p = Jsoup.parse(temp);
                     Elements links = p.select("a[href]");
@@ -155,7 +158,8 @@ public class Main {
                     Elements listElements = bodyStuff.select("li");
                     outer: for(Element listElement: listElements) {
                         String temp = listElement.outerHtml();
-                    temp = temp.replaceAll("(<b>|</b>)", "");
+                    temp = temp.replace("<br>", ""); 
+                    temp = temp.replace("</br>", "");
                         TreeMap<Integer, Integer> map = map(temp);
                         Document li = Jsoup.parse(temp);
                         Elements links = li.select("a[href]");
@@ -222,7 +226,9 @@ public class Main {
                 Elements listElements = bodyStuff.select("li");
                 outer: for(Element listElement: listElements) {
                     String temp = listElement.outerHtml();
-                    temp = temp.replaceAll("(<b>|</b>)", "");
+                    temp = temp.replace("<br>", "");
+                    temp = temp.replace("</br>", "");
+                    
                     TreeMap<Integer, Integer> map = map(temp);
                     Document li = Jsoup.parse(temp);
                     Elements links = li.select("a[href]");
@@ -244,10 +250,10 @@ public class Main {
                 }
             } else {
                 outer: for (Element parag : parags) {
-                    if(parag.parent().tagName().equals("td")) 
-                        continue;
                     String temp = parag.outerHtml();
-                    temp = temp.replaceAll("(<b>|</b>)", "");
+                    temp = temp.replace("<br>", "");
+                    temp = temp.replace("</br>", "");
+                    
                     TreeMap<Integer, Integer> map = map(temp);
                     Document p = Jsoup.parse(temp);
                     Elements links = p.select("a[href]");
@@ -256,7 +262,6 @@ public class Main {
                         if(link.parent().is("span#coordinates")) 
                             continue outer;
                         String outer = link.outerHtml();
-                        System.out.println(links);
                         if(map.get(map.floorKey(temp.indexOf(outer))) != 0) 
                             continue;
                         String linkHref = link.attr("href");
@@ -273,7 +278,9 @@ public class Main {
                     Elements listElements = bodyStuff.select("li");
                     outer: for(Element listElement: listElements) {
                         String temp = listElement.outerHtml();
-                        temp = temp.replaceAll("(<b>|</b>)", "");
+                        temp = temp.replace("<br>", ""); 
+                        temp = temp.replace("</br>", "");
+                        
                         TreeMap<Integer, Integer> map = map(temp);
                         Document li = Jsoup.parse(temp);
                         Elements links = li.select("a[href]");
@@ -355,7 +362,8 @@ public class Main {
                 Elements listElements = bodyStuff.select("li");
                 outer: for(Element listElement: listElements) {
                     String temp = listElement.outerHtml();
-                    temp = temp.replaceAll("(<b>|</b>)", "");
+                    temp = temp.replace("<br>", ""); 
+                    temp = temp.replace("</br>", "");
                     TreeMap<Integer, Integer> map = map(temp);
                     Document li = Jsoup.parse(temp);
                     Elements links = li.select("a[href]");
@@ -381,10 +389,9 @@ public class Main {
                 }
             } else {
                 outer: for (Element parag : parags) {
-                    if(parag.parent().tagName().equals("td")) 
-                        continue;
                     String temp = parag.outerHtml();
-                    temp = temp.replaceAll("(<b>|</b>)", "");
+                    temp = temp.replace("<br>", ""); 
+                    temp = temp.replace("</br>", "");
                     TreeMap<Integer, Integer> map = map(temp);
                     Document p = Jsoup.parse(temp);
                     Elements links = p.select("a[href]");
@@ -412,7 +419,8 @@ public class Main {
                 Elements listElements = bodyStuff.select("li");
                 outer: for(Element listElement: listElements) {
                     String temp = listElement.outerHtml();
-                    temp = temp.replaceAll("(<b>|</b>)", "");
+                    temp = temp.replace("<br>", ""); 
+                    temp = temp.replace("</br>", "");
                     TreeMap<Integer, Integer> map = map(temp);
                     Document li = Jsoup.parse(temp);
                     Elements links = li.select("a[href]");
