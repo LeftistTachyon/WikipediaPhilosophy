@@ -16,7 +16,7 @@ public class Main {
     /**
      * The main method
      * @param args the command line arguments
-     * @throws java.io.IOException AAAAAAAAAAAAAAAAAAAAs
+     * @throws java.io.IOException AAAAAAAAAAAAAAAAAAAA
      */
     public static void main(String[] args) throws IOException {
         /*final int cores = Runtime.getRuntime().availableProcessors(), 
@@ -41,9 +41,9 @@ public class Main {
             }).start();
         }*/
         
-        final int pagesToVisit = 10;
+        /*final int pagesToVisit = 10;
         double avgTime = 0;
-        int max = -1;
+        int max = -1, toPhil = 0;
         String title = null;
         for(int i = 0; i < pagesToVisit; i++) {
             double start = System.nanoTime();
@@ -51,6 +51,7 @@ public class Main {
                     "https://en.wikipedia.org/wiki/Special:Random").get();
             int hops = forceToPhilosophy(
                     tempD.location());
+            if(hops >= 0) toPhil++;
             String temp = tempD.selectFirst("h1#firstHeading").text();
             if(hops > max) {
                 max = hops;
@@ -64,11 +65,14 @@ public class Main {
         }
         System.out.printf("%nMax hops: %d hops - %s%n", max, title);
         System.out.printf("Avg time: %.3f ms%n", avgTime/pagesToVisit);
+        System.out.printf("%% to philosophy: %.2f%%%n", 
+                ((double)toPhil*100)/pagesToVisit);*/
         
-        /*double start = System.nanoTime();
-        traceToPhilosophy("https://en.wikipedia.org/wiki/England");
+        double start = System.nanoTime();
+        traceToPhilosophy("https://en.wikipedia.org/wiki/2018–19_Hamburger_SV_season");
+        // also 2018–19 Hamburger SV season
         double total = System.nanoTime() - start;
-        System.out.printf("%nTotal:\t%.3f ms%n", total/1000000);*/
+        System.out.printf("%nTotal:\t%.3f ms%n", total/1000000);
     }
     
     /**
@@ -113,8 +117,10 @@ public class Main {
                         if(link.parent().is("span#coordinates")) 
                             continue outer;
                         String outer = link.outerHtml();
-                        if(map.get(map.floorKey(temp.indexOf(outer))) != 0 || 
-                                tableMap.get(tableMap.floorKey(fullHTML.indexOf(outer))) != 0) 
+                        if(tableMap.get(tableMap.floorKey(fullHTML.indexOf(
+                                outer))) != 0)
+                            continue outer;
+                        if(map.get(map.floorKey(temp.indexOf(outer))) != 0) 
                             continue;
                         String linkHref = link.attr("href");
                         if(!linkHref.contains("#") && !linkHref.contains(":")
@@ -136,8 +142,10 @@ public class Main {
                         if(link.parent().is("span#coordinates")) 
                             continue outer;
                         String outer = link.outerHtml();
-                        if(map.get(map.floorKey(temp.indexOf(outer))) != 0 || 
-                                tableMap.get(tableMap.floorKey(fullHTML.indexOf(outer))) != 0) 
+                        if(tableMap.get(tableMap.floorKey(fullHTML.indexOf(
+                                outer))) != 0)
+                            continue outer;
+                        if(map.get(map.floorKey(temp.indexOf(outer))) != 0) 
                             continue;
                         String linkHref = link.attr("href");
                         if(!"".equals(linkHref) &&
@@ -146,6 +154,33 @@ public class Main {
                                 !linkHref.contains("upload.wikimedia.org")) {
                             toGo = link;
                             break outer;
+                        }
+                    }
+                }
+                if(toGo == null) {
+                    Elements listElements = bodyStuff.select("li");
+                    outer: for(Element listElement: listElements) {
+                        String temp = listElement.outerHtml();
+                        TreeMap<Integer, Integer> map = map(temp);
+                        Document li = Jsoup.parse(temp);
+                        Elements links = li.select("a[href]");
+                        if(links.isEmpty()) continue;
+                        for(Element link : links) {
+                            if(link.parent().is("span#coordinates")) 
+                                continue outer;
+                            String outer = link.outerHtml();
+                            if(tableMap.get(tableMap.floorKey(fullHTML.indexOf(
+                                    outer))) != 0)
+                                continue outer;
+                            if(map.get(map.floorKey(temp.indexOf(outer))) != 0) 
+                                continue;
+                            String linkHref = link.attr("href");
+                            if(!linkHref.contains("#") && !linkHref.contains(":")
+                                    && !linkHref.contains("action=edit") && 
+                                    !linkHref.contains("upload.wikimedia.org")) {
+                                toGo = link;
+                                break outer;
+                            }
                         }
                     }
                 }
@@ -166,6 +201,7 @@ public class Main {
      * @throws IOException if something goes wrong
      */
     public static void traceToPhilosophy(String toConnect) throws IOException {
+        int steps = 0;
         double start, total;
         start = System.nanoTime();
         HashSet<String> sanity = new HashSet<>();
@@ -180,6 +216,8 @@ public class Main {
             if(!sanity.add(title)) {
                 if(title.equals("Existence") || title.equals("Reality"))
                     System.out.println("Exited due to E-R loop");
+                System.out.println("Couldn\'t reach philosophy.");
+                System.out.println("Total steps: " + steps);
                 return;
             }
             
@@ -202,8 +240,10 @@ public class Main {
                         if(link.parent().is("span#coordinates")) 
                             continue outer;
                         String outer = link.outerHtml();
-                        if(map.get(map.floorKey(temp.indexOf(outer))) != 0 || 
-                                tableMap.get(tableMap.floorKey(fullHTML.indexOf(outer))) != 0) 
+                        if(tableMap.get(tableMap.floorKey(fullHTML.indexOf(
+                                outer))) != 0)
+                            continue outer;
+                        if(map.get(map.floorKey(temp.indexOf(outer))) != 0) 
                             continue;
                         String linkHref = link.attr("href");
                         if(!linkHref.contains("#") && !linkHref.contains(":")
@@ -227,8 +267,11 @@ public class Main {
                         if(link.parent().is("span#coordinates")) 
                             continue outer;
                         String outer = link.outerHtml();
-                        if(map.get(map.floorKey(temp.indexOf(outer))) != 0 || 
-                                tableMap.get(tableMap.floorKey(fullHTML.indexOf(outer))) != 0) 
+                        if(tableMap.get(tableMap.floorKey(fullHTML.indexOf(
+                                outer))) != 0)
+                            continue outer;
+                        System.out.println(links);
+                        if(map.get(map.floorKey(temp.indexOf(outer))) != 0) 
                             continue;
                         String linkHref = link.attr("href");
                         if(!"".equals(linkHref) &&
@@ -240,8 +283,37 @@ public class Main {
                         }
                     }
                 }
+                if(toGo == null) {
+                    Elements listElements = bodyStuff.select("li");
+                    outer: for(Element listElement: listElements) {
+                        String temp = listElement.outerHtml();
+                        TreeMap<Integer, Integer> map = map(temp);
+                        Document li = Jsoup.parse(temp);
+                        Elements links = li.select("a[href]");
+                        if(links.isEmpty()) continue;
+                        for(Element link : links) {
+                            if(link.parent().is("span#coordinates")) 
+                                continue outer;
+                            String outer = link.outerHtml();
+                            if(tableMap.get(tableMap.floorKey(fullHTML.indexOf(
+                                    outer))) != 0)
+                                continue outer;
+                            if(map.get(map.floorKey(temp.indexOf(outer))) != 0) 
+                                continue;
+                            String linkHref = link.attr("href");
+                            if(!linkHref.contains("#") && !linkHref.contains(":")
+                                    && !linkHref.contains("action=edit") && 
+                                    !linkHref.contains("upload.wikimedia.org")) {
+                                toGo = link;
+                                break outer;
+                            }
+                        }
+                    }
+                }
             }
             if(toGo == null) {
+                System.out.println("Couldn\'t reach philosophy.");
+                System.out.println("Total steps: " + steps);
                 return;
             }
             total = System.nanoTime() - start;
@@ -251,7 +323,10 @@ public class Main {
                     "https://en.wikipedia.org" + toGo.attr("href")).get();
             total = System.nanoTime() - start;
             System.out.printf("Reconnect:\t%.3f ms%n%n", total/1000000);
+            steps++;
         }
+        System.out.println("Reached philosophy!");
+        System.out.println("Total steps: " + steps);
     }
     
     /**
@@ -306,8 +381,10 @@ public class Main {
                         if(link.parent().is("span#coordinates")) 
                             continue outer;
                         String outer = link.outerHtml();
-                        if(map.get(map.floorKey(temp.indexOf(outer))) != 0 || 
-                                tableMap.get(tableMap.floorKey(fullHTML.indexOf(outer))) != 0) 
+                        if(tableMap.get(tableMap.floorKey(fullHTML.indexOf(
+                                outer))) != 0)
+                            continue outer;
+                        if(map.get(map.floorKey(temp.indexOf(outer))) != 0) 
                             continue;
                         String linkHref = link.attr("href");
                         if(!linkHref.contains("#") && !linkHref.contains(":")
@@ -335,13 +412,44 @@ public class Main {
                         if(link.parent().is("span#coordinates")) 
                             continue outer;
                         String outer = link.outerHtml();
-                        if(map.get(map.floorKey(temp.indexOf(outer))) != 0 || 
-                                tableMap.get(tableMap.floorKey(fullHTML.indexOf(outer))) != 0) 
+                        if(tableMap.get(tableMap.floorKey(fullHTML.indexOf(
+                                outer))) != 0)
+                            continue outer;
+                        if(map.get(map.floorKey(temp.indexOf(outer))) != 0) 
                             continue;
                         String linkHref = link.attr("href");
                         if(!"".equals(linkHref) &&
                                 !linkHref.contains("#") && !linkHref.contains(":") 
                                 && !linkHref.contains("action=edit") &&
+                                !linkHref.contains("upload.wikimedia.org")) {
+                            // try this one
+                            int force = forceToPhilosophy(
+                                    "https://en.wikipedia.org" 
+                                            + link.attr("href"), 
+                                    new HashSet<>(visited), hops+1);
+                            if(force >= 0) return force;
+                        }
+                    }
+                }
+                Elements listElements = bodyStuff.select("li");
+                outer: for(Element listElement: listElements) {
+                    String temp = listElement.outerHtml();
+                    TreeMap<Integer, Integer> map = map(temp);
+                    Document li = Jsoup.parse(temp);
+                    Elements links = li.select("a[href]");
+                    if(links.isEmpty()) continue;
+                    for(Element link : links) {
+                        if(link.parent().is("span#coordinates")) 
+                            continue outer;
+                        String outer = link.outerHtml();
+                        if(tableMap.get(tableMap.floorKey(fullHTML.indexOf(
+                                outer))) != 0)
+                            continue outer;
+                        if(map.get(map.floorKey(temp.indexOf(outer))) != 0) 
+                            continue;
+                        String linkHref = link.attr("href");
+                        if(!linkHref.contains("#") && !linkHref.contains(":")
+                                && !linkHref.contains("action=edit") && 
                                 !linkHref.contains("upload.wikimedia.org")) {
                             // try this one
                             int force = forceToPhilosophy(
