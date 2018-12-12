@@ -14,7 +14,7 @@ import org.jsoup.select.Elements;
  * @author Jed Wang
  */
 public class Main {
-    static final int PAGES_TO_VISIT = 100;
+    static final int PAGES_TO_VISIT = 1000;
     static double avgTime = 0, lastStart = 0;
     static int max = -1, toPhil = 0, finished = 0;
     static String maxTitle = null;
