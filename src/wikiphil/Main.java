@@ -14,6 +14,12 @@ import org.jsoup.select.Elements;
  * @author Jed Wang
  */
 public class Main {
+    static final int PAGES_TO_VISIT = 100;
+    static double avgTime = 0, lastStart = 0;
+    static int max = -1, toPhil = 0, finished = 0;
+    static String maxTitle = null;
+    
+    static final Object PRINT_LOCK = new Object();
 
     /**
      * The main method
@@ -26,34 +32,42 @@ public class Main {
                 aaa = 100 / cores;*/
 
         // the number of pages to try to get to philosophy from
-        final int pagesToVisit = 100;
-        double avgTime = 0;
-        int max = -1, toPhil = 0;
-        String title = null;
-        for (int i = 0; i < pagesToVisit; i++) {
-            double start = System.nanoTime();
-            Document tempD = Jsoup.connect(
-                    "https://en.wikipedia.org/wiki/Special:Random").get();
-            int hops = hopsToPhilosophy(
-                    tempD);
-            if (hops >= 0) {
-                toPhil++;
-            }
-            String temp = tempD.selectFirst("h1#firstHeading").text();
-            if (hops > max) {
-                max = hops;
-                title = temp;
-            }
-            System.out.printf("%-100s", temp
-                    + ": " + hops + " hops");
-            double total = System.nanoTime() - start;
-            System.out.printf("%.3f ms%n", total /= 1000000);
-            avgTime += total;
+        for (int i = 0; i < PAGES_TO_VISIT; i++) {
+            lastStart = System.nanoTime();
+            new Thread(() -> {
+                try {
+                    Document tempD = Jsoup.connect(
+                            "https://en.wikipedia.org/wiki/Special:Random").get();
+                    int hops = hopsToPhilosophy(tempD);
+                    if (hops >= 0) {
+                        toPhil++;
+                    }
+                    String temp = tempD.selectFirst("h1#firstHeading").text();
+                    if (hops > max) {
+                        max = hops;
+                        maxTitle = temp;
+                    }
+                    double total = 0;
+                    synchronized(PRINT_LOCK) {
+                        System.out.printf("%-100s", temp
+                                + ": " + hops + " hops");
+                        total = System.nanoTime() - lastStart;
+                        System.out.printf("%.3f ms%n", total /= 1000000);
+                    }
+                    avgTime += total;
+                    lastStart = System.nanoTime();
+                    
+                    if(++finished == PAGES_TO_VISIT) {
+                        System.out.printf("%nMax hops: %d hops - %s%n", max, maxTitle);
+                        System.out.printf("Avg time: %.3f ms%n", avgTime / PAGES_TO_VISIT);
+                        System.out.printf("%% to philosophy: %.2f%%%n",
+                                ((double) toPhil * 100) / PAGES_TO_VISIT);
+                    }
+                } catch (IOException ex) {
+                    System.err.println(ex.toString());
+                }
+            }).start();
         }
-        System.out.printf("%nMax hops: %d hops - %s%n", max, title);
-        System.out.printf("Avg time: %.3f ms%n", avgTime / pagesToVisit);
-        System.out.printf("%% to philosophy: %.2f%%%n",
-                ((double) toPhil * 100) / pagesToVisit);
 
         /*double start = System.nanoTime();
         traceToPhilosophy("https://en.wikipedia.org/wiki/1858_in_architecture");
@@ -77,9 +91,9 @@ public class Main {
         int output = 0;
         while (!current.title().equals("Philosophy - Wikipedia")) {
             String title = current.selectFirst("h1#firstHeading").text();
-            // System.out.println(title);
+            // System.out.println(maxTitle);
             if (!sanity.add(title)) {
-                /*if(title.equals("Existence") || title.equals("Reality"))
+                /*if(maxTitle.equals("Existence") || maxTitle.equals("Reality"))
                     return -2;*/
                 return -output - 1;
             }
@@ -366,9 +380,9 @@ public class Main {
                 .get().outerHtml()));*/
         if (!current.title().equals("Philosophy - Wikipedia")) {
             String title = current.selectFirst("h1#firstHeading").text();
-            // System.out.println(title);
+            // System.out.println(maxTitle);
             if (!visited.add(title)) {
-                /*if(title.equals("Existence") || title.equals("Reality"))
+                /*if(maxTitle.equals("Existence") || maxTitle.equals("Reality"))
                     return -2;*/
                 return -hops - 1;
             }
@@ -622,76 +636,5 @@ public class Main {
             }
         }
         return parentheses;
-    }
-
-    /**
-     * A class that gives Documents from a Queue
-     */
-    public static class DocumentRequester implements Runnable {
-
-        /**
-         * A finished product
-         */
-        private Document product;
-
-        /**
-         * A request
-         */
-        private String request;
-
-        /**
-         * Ready for request?
-         */
-        private boolean valSet = false;
-
-        /**
-         * AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA.
-         */
-        public DocumentRequester() {
-            product = null;
-            request = null;
-        }
-
-        /**
-         * Requests a Document
-         *
-         * @param location the location of the document
-         * @return the requested Document
-         * @throws InterruptedException if something goes wrong
-         */
-        public synchronized Document request(String location)
-                throws InterruptedException {
-            // put
-            if (valSet) {
-                wait();
-            }
-            request = location;
-            valSet = true;
-            notify();
-            wait();
-            return product;
-        }
-
-        @Override
-        public synchronized void run() {
-            while (true) {
-                if (!valSet) {
-                    try {
-                        wait();
-                    } catch (InterruptedException ex) {
-                        System.err.println("Interrupted.");
-                    }
-                }
-                try {
-                    product = Jsoup.connect(request).get();
-                } catch (IOException ex) {
-                    ex.printStackTrace();
-                } catch (IllegalArgumentException iae) {
-                    System.out.println("IAE: " + request + " != valid");
-                }
-                valSet = false;
-                notifyAll();
-            }
-        }
     }
 }
