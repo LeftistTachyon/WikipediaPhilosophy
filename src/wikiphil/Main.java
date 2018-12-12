@@ -20,7 +20,7 @@ public class Main {
     /**
      * # of pages to visit
      */
-    private static final int PAGES_TO_VISIT = 100;
+    private static final int PAGES_TO_VISIT = 10;
 
     /**
      * # of cores on this computer
@@ -92,18 +92,23 @@ public class Main {
                                 "https://en.wikipedia.org/wiki/Special:Random");
                         int hops = hopsToPhilosophy(tempD);
                         double total = System.nanoTime() - lastStart;
+                        total /= 1000000;
                         String title_ = tempD.selectFirst("h1#firstHeading").text();
-                        newPage(title_, hops, total);
+                        if (cntr > 0) {
+                            newPage(title_, hops, total);
+                        } else {
+                            break;
+                        }
                         cntr--;
                         System.out.printf("%-100s", title_ + ": " + hops + " hops");
-                        System.out.printf("%.3f ms%n", total /= 1000000);
+                        System.out.printf("%.3f ms%n", total);
                         lastStart = System.nanoTime();
                     } catch (InterruptedException | IOException ex) {
                         Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
                     }
                 }
                 System.out.println("Finished: " + finished);
-                if (++finished == CORES) {
+                if (++finished == coresToUse) {
                     printStatistics();
                     dr.stop();
                 }
