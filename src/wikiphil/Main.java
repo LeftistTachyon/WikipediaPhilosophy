@@ -23,57 +23,40 @@ public class Main {
      */
     public static void main(String[] args) throws IOException {
         /*final int cores = Runtime.getRuntime().availableProcessors(), 
-                aaa = 100 / cores;
-        for(int z = 0;z<cores;z++) {
-            new Thread(() -> {
-                for(int i = 0; i < aaa; i++) {
-                    try {
-                        double start = System.nanoTime();
-                        Document tempD = Jsoup.connect(
-                                "https://en.wikipedia.org/wiki/Special:Random").get();
-                        String temp = tempD.selectFirst("h1#firstHeading").text() + 
-                                ": " + hopsToPhilosophy(
-                                tempD.location()) + " hops";
-                        System.out.printf("%-75s", temp);
-                        double total = System.nanoTime() - start;
-                        System.out.printf("%.4f ms%n", total/1000000);
-                    } catch (IOException ex) {
-                        ex.printStackTrace();
-                    }
-                }
-            }).start();
-        }*/
+                aaa = 100 / cores;*/
 
         // the number of pages to try to get to philosophy from
         final int pagesToVisit = 100;
         double avgTime = 0;
         int max = -1, toPhil = 0;
         String title = null;
-        for(int i = 0; i < pagesToVisit; i++) {
+        for (int i = 0; i < pagesToVisit; i++) {
             double start = System.nanoTime();
             Document tempD = Jsoup.connect(
                     "https://en.wikipedia.org/wiki/Special:Random").get();
-            int hops = forceToPhilosophy(
-                    tempD.location());
-            if(hops >= 0) toPhil++;
+            int hops = hopsToPhilosophy(
+                    tempD);
+            if (hops >= 0) {
+                toPhil++;
+            }
             String temp = tempD.selectFirst("h1#firstHeading").text();
-            if(hops > max) {
+            if (hops > max) {
                 max = hops;
                 title = temp;
             }
-            System.out.printf("%-100s", temp + 
-                    ": " + hops + " hops");
+            System.out.printf("%-100s", temp
+                    + ": " + hops + " hops");
             double total = System.nanoTime() - start;
-            System.out.printf("%.3f ms%n", total/=1000000);
+            System.out.printf("%.3f ms%n", total /= 1000000);
             avgTime += total;
         }
         System.out.printf("%nMax hops: %d hops - %s%n", max, title);
-        System.out.printf("Avg time: %.3f ms%n", avgTime/pagesToVisit);
-        System.out.printf("%% to philosophy: %.2f%%%n", 
-                ((double)toPhil*100)/pagesToVisit);
-        
+        System.out.printf("Avg time: %.3f ms%n", avgTime / pagesToVisit);
+        System.out.printf("%% to philosophy: %.2f%%%n",
+                ((double) toPhil * 100) / pagesToVisit);
+
         /*double start = System.nanoTime();
-        traceToPhilosophy("https://en.wikipedia.org/wiki/Countries_in_the_International_Organization_for_Standardization");
+        traceToPhilosophy("https://en.wikipedia.org/wiki/1858_in_architecture");
         // also 2018–19 Hamburger SV season
         double total = System.nanoTime() - start;
         System.out.printf("%nTotal:\t%.3f ms%n", total / 1000000);*/
@@ -82,17 +65,15 @@ public class Main {
     /**
      * Loops through a single random page
      *
-     * @param toConnect the page to connect to
+     * @param current the Document to start at
      * @return how many hops to Philosophy, -1 if it doesn't
      * @throws IOException if something goes wrong
      */
-    public static int hopsToPhilosophy(String toConnect) throws IOException {
+    public static int hopsToPhilosophy(Document current) throws IOException {
         HashSet<String> sanity = new HashSet<>();
         /*Document current = Jsoup.parse(parse(Jsoup.connect(
                     "https://en.wikipedia.org/wiki/Special:Random")
                 .get().outerHtml()));*/
-        Document current = Jsoup.connect(
-                toConnect).get();
         int output = 0;
         while (!current.title().equals("Philosophy - Wikipedia")) {
             String title = current.selectFirst("h1#firstHeading").text();
@@ -361,30 +342,28 @@ public class Main {
     /**
      * Forces a link pathway to Philosophy
      *
-     * @param toConnect the page to start at
+     * @param current the Document to start with
      * @return the number of steps on the forced pathway
      * @throws IOException if something goes wrong
      */
-    public static int forceToPhilosophy(String toConnect) throws IOException {
-        return forceToPhilosophy(toConnect, new HashSet<>(), 0);
+    public static int forceToPhilosophy(Document current) throws IOException {
+        return forceToPhilosophy(current, new HashSet<>(), 0);
     }
 
     /**
      * Forces a link pathway to Philosophy
      *
-     * @param toConnect the page to start at
+     * @param current the Document to start with
      * @param visited a HashSet of pages that have been already visited
      * @param hops the number of current hops already taken
      * @return the number of steps on the forced pathway
      * @throws IOException if something goes wrong
      */
-    private static int forceToPhilosophy(String toConnect,
+    private static int forceToPhilosophy(Document current,
             HashSet<String> visited, int hops) throws IOException {
         /*Document current = Jsoup.parse(parse(Jsoup.connect(
                     "https://en.wikipedia.org/wiki/Special:Random")
                 .get().outerHtml()));*/
-        Document current = Jsoup.connect(
-                toConnect).get();
         if (!current.title().equals("Philosophy - Wikipedia")) {
             String title = current.selectFirst("h1#firstHeading").text();
             // System.out.println(title);
@@ -426,8 +405,8 @@ public class Main {
                                 && !linkHref.contains("upload.wikimedia.org")) {
                             // try this one
                             int force = forceToPhilosophy(
-                                    "https://en.wikipedia.org"
-                                    + link.attr("href"),
+                                    Jsoup.connect("https://en.wikipedia.org"
+                                            + link.attr("href")).get(),
                                     new HashSet<>(visited), hops + 1);
                             if (force >= 0) {
                                 return force;
@@ -462,8 +441,8 @@ public class Main {
                                 && !linkHref.contains("upload.wikimedia.org")) {
                             // try this one
                             int force = forceToPhilosophy(
-                                    "https://en.wikipedia.org"
-                                    + link.attr("href"),
+                                    Jsoup.connect("https://en.wikipedia.org"
+                                            + link.attr("href")).get(),
                                     new HashSet<>(visited), hops + 1);
                             if (force >= 0) {
                                 return force;
@@ -497,8 +476,8 @@ public class Main {
                                 && !linkHref.contains("upload.wikimedia.org")) {
                             // try this one
                             int force = forceToPhilosophy(
-                                    "https://en.wikipedia.org"
-                                    + link.attr("href"),
+                                    Jsoup.connect("https://en.wikipedia.org"
+                                            + link.attr("href")).get(),
                                     new HashSet<>(visited), hops + 1);
                             if (force >= 0) {
                                 return force;
@@ -643,5 +622,76 @@ public class Main {
             }
         }
         return parentheses;
+    }
+
+    /**
+     * A class that gives Documents from a Queue
+     */
+    public static class DocumentRequester implements Runnable {
+
+        /**
+         * A finished product
+         */
+        private Document product;
+
+        /**
+         * A request
+         */
+        private String request;
+
+        /**
+         * Ready for request?
+         */
+        private boolean valSet = false;
+
+        /**
+         * AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA.
+         */
+        public DocumentRequester() {
+            product = null;
+            request = null;
+        }
+
+        /**
+         * Requests a Document
+         *
+         * @param location the location of the document
+         * @return the requested Document
+         * @throws InterruptedException if something goes wrong
+         */
+        public synchronized Document request(String location)
+                throws InterruptedException {
+            // put
+            if (valSet) {
+                wait();
+            }
+            request = location;
+            valSet = true;
+            notify();
+            wait();
+            return product;
+        }
+
+        @Override
+        public synchronized void run() {
+            while (true) {
+                if (!valSet) {
+                    try {
+                        wait();
+                    } catch (InterruptedException ex) {
+                        System.err.println("Interrupted.");
+                    }
+                }
+                try {
+                    product = Jsoup.connect(request).get();
+                } catch (IOException ex) {
+                    ex.printStackTrace();
+                } catch (IllegalArgumentException iae) {
+                    System.out.println("IAE: " + request + " != valid");
+                }
+                valSet = false;
+                notifyAll();
+            }
+        }
     }
 }
