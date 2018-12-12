@@ -3,6 +3,8 @@ package wikiphil;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.TreeMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -16,17 +18,100 @@ import org.jsoup.select.Elements;
 public class Main {
 
     /**
+     * # of pages to visit
+     */
+    private static final int PAGES_TO_VISIT = 100;
+
+    /**
+     * # of cores on this computer
+     */
+    private static final int CORES = Runtime.getRuntime().availableProcessors();
+
+    /**
+     * Keeps track of how many pages to go
+     */
+    private static int cntr = PAGES_TO_VISIT;
+
+    /**
+     * # of threads finished executing
+     */
+    private static int finished = 0;
+
+    /**
+     * A DocumentRequester for requesting documents
+     */
+    private static DocumentRequester dr;
+
+    /**
+     * All keeping track of statistics
+     */
+    private static double totalTime = 0;
+    private static int max = -1, toPhil = 0;
+    private static String title = null;
+
+    /**
+     * Updates statistics
+     *
+     * @param title the title of the page
+     * @param hops the number of hops
+     * @param millis the amount of milliseconds taken to get there
+     */
+    private static void newPage(String title, int hops, double millis) {
+        if (hops > -1) {
+            toPhil++;
+        }
+        if (hops > max) {
+            Main.title = title;
+            max = hops;
+        }
+        totalTime += millis;
+    }
+
+    private static double lastStart = 0;
+
+    /**
      * The main method
      *
      * @param args the command line arguments
      * @throws java.io.IOException AAAAAAAAAAAAAAAAAAAA
      */
     public static void main(String[] args) throws IOException {
-        /*final int cores = Runtime.getRuntime().availableProcessors(), 
-                aaa = 100 / cores;*/
+        dr = new DocumentRequester();
+        new Thread(dr).start();
+
+        int coresToUse = Math.max(CORES - 2, 1);
+        System.out.println("Detected " + CORES + " cores; using "
+                + (coresToUse + 1) + ".");
+
+        lastStart = System.nanoTime();
+        for (int i = 0; i < coresToUse; i++) {
+            new Thread(() -> {
+                while (cntr > 0) {
+                    try {
+                        Document tempD = dr.request(
+                                "https://en.wikipedia.org/wiki/Special:Random");
+                        int hops = hopsToPhilosophy(tempD);
+                        double total = System.nanoTime() - lastStart;
+                        String title_ = tempD.selectFirst("h1#firstHeading").text();
+                        newPage(title_, hops, total);
+                        cntr--;
+                        System.out.printf("%-100s", title_ + ": " + hops + " hops");
+                        System.out.printf("%.3f ms%n", total /= 1000000);
+                        lastStart = System.nanoTime();
+                    } catch (InterruptedException | IOException ex) {
+                        Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                }
+                System.out.println("Finished: " + finished);
+                if (++finished == CORES) {
+                    printStatistics();
+                    dr.stop();
+                }
+            }).start();
+        }
 
         // the number of pages to try to get to philosophy from
-        final int pagesToVisit = 100;
+        /*final int pagesToVisit = 100;
         double avgTime = 0;
         int max = -1, toPhil = 0;
         String title = null;
@@ -44,22 +129,31 @@ public class Main {
                 max = hops;
                 title = temp;
             }
+            double total = System.nanoTime() - start;
             System.out.printf("%-100s", temp
                     + ": " + hops + " hops");
-            double total = System.nanoTime() - start;
             System.out.printf("%.3f ms%n", total /= 1000000);
             avgTime += total;
         }
         System.out.printf("%nMax hops: %d hops - %s%n", max, title);
         System.out.printf("Avg time: %.3f ms%n", avgTime / pagesToVisit);
         System.out.printf("%% to philosophy: %.2f%%%n",
-                ((double) toPhil * 100) / pagesToVisit);
-
-        /*double start = System.nanoTime();
+                ((double) toPhil * 100) / pagesToVisit);*/
+ /*double start = System.nanoTime();
         traceToPhilosophy("https://en.wikipedia.org/wiki/1858_in_architecture");
         // also 2018–19 Hamburger SV season
         double total = System.nanoTime() - start;
         System.out.printf("%nTotal:\t%.3f ms%n", total / 1000000);*/
+    }
+
+    /**
+     * Prints out the statistics.
+     */
+    private static void printStatistics() {
+        System.out.printf("%nMax hops: %d hops - %s%n", max, title);
+        System.out.printf("Avg time: %.3f ms%n", totalTime / PAGES_TO_VISIT);
+        System.out.printf("%% to philosophy: %.2f%%%n",
+                ((double) toPhil * 100) / PAGES_TO_VISIT);
     }
 
     /**
@@ -68,8 +162,10 @@ public class Main {
      * @param current the Document to start at
      * @return how many hops to Philosophy, -1 if it doesn't
      * @throws IOException if something goes wrong
+     * @throws InterruptedException if something gets interrupted
      */
-    public static int hopsToPhilosophy(Document current) throws IOException {
+    public static int hopsToPhilosophy(Document current) throws IOException,
+            InterruptedException {
         HashSet<String> sanity = new HashSet<>();
         /*Document current = Jsoup.parse(parse(Jsoup.connect(
                     "https://en.wikipedia.org/wiki/Special:Random")
@@ -185,8 +281,7 @@ public class Main {
             if (toGo == null) {
                 return -output - 1;
             }
-            current = Jsoup.connect(
-                    "https://en.wikipedia.org" + toGo.attr("href")).get();
+            current = dr.request("https://en.wikipedia.org" + toGo.attr("href"));
             output++;
         }
         return output;
@@ -345,8 +440,10 @@ public class Main {
      * @param current the Document to start with
      * @return the number of steps on the forced pathway
      * @throws IOException if something goes wrong
+     * @throws InterruptedException if somethings is interrupted
      */
-    public static int forceToPhilosophy(Document current) throws IOException {
+    public static int forceToPhilosophy(Document current) throws IOException,
+            InterruptedException {
         return forceToPhilosophy(current, new HashSet<>(), 0);
     }
 
@@ -360,7 +457,7 @@ public class Main {
      * @throws IOException if something goes wrong
      */
     private static int forceToPhilosophy(Document current,
-            HashSet<String> visited, int hops) throws IOException {
+            HashSet<String> visited, int hops) throws IOException, InterruptedException {
         /*Document current = Jsoup.parse(parse(Jsoup.connect(
                     "https://en.wikipedia.org/wiki/Special:Random")
                 .get().outerHtml()));*/
@@ -405,8 +502,8 @@ public class Main {
                                 && !linkHref.contains("upload.wikimedia.org")) {
                             // try this one
                             int force = forceToPhilosophy(
-                                    Jsoup.connect("https://en.wikipedia.org"
-                                            + link.attr("href")).get(),
+                                    dr.request("https://en.wikipedia.org"
+                                            + link.attr("href")),
                                     new HashSet<>(visited), hops + 1);
                             if (force >= 0) {
                                 return force;
@@ -441,8 +538,8 @@ public class Main {
                                 && !linkHref.contains("upload.wikimedia.org")) {
                             // try this one
                             int force = forceToPhilosophy(
-                                    Jsoup.connect("https://en.wikipedia.org"
-                                            + link.attr("href")).get(),
+                                    dr.request("https://en.wikipedia.org"
+                                            + link.attr("href")),
                                     new HashSet<>(visited), hops + 1);
                             if (force >= 0) {
                                 return force;
@@ -476,8 +573,8 @@ public class Main {
                                 && !linkHref.contains("upload.wikimedia.org")) {
                             // try this one
                             int force = forceToPhilosophy(
-                                    Jsoup.connect("https://en.wikipedia.org"
-                                            + link.attr("href")).get(),
+                                    dr.request("https://en.wikipedia.org"
+                                            + link.attr("href")),
                                     new HashSet<>(visited), hops + 1);
                             if (force >= 0) {
                                 return force;
@@ -622,76 +719,5 @@ public class Main {
             }
         }
         return parentheses;
-    }
-
-    /**
-     * A class that gives Documents from a Queue
-     */
-    public static class DocumentRequester implements Runnable {
-
-        /**
-         * A finished product
-         */
-        private Document product;
-
-        /**
-         * A request
-         */
-        private String request;
-
-        /**
-         * Ready for request?
-         */
-        private boolean valSet = false;
-
-        /**
-         * AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA.
-         */
-        public DocumentRequester() {
-            product = null;
-            request = null;
-        }
-
-        /**
-         * Requests a Document
-         *
-         * @param location the location of the document
-         * @return the requested Document
-         * @throws InterruptedException if something goes wrong
-         */
-        public synchronized Document request(String location)
-                throws InterruptedException {
-            // put
-            if (valSet) {
-                wait();
-            }
-            request = location;
-            valSet = true;
-            notify();
-            wait();
-            return product;
-        }
-
-        @Override
-        public synchronized void run() {
-            while (true) {
-                if (!valSet) {
-                    try {
-                        wait();
-                    } catch (InterruptedException ex) {
-                        System.err.println("Interrupted.");
-                    }
-                }
-                try {
-                    product = Jsoup.connect(request).get();
-                } catch (IOException ex) {
-                    ex.printStackTrace();
-                } catch (IllegalArgumentException iae) {
-                    System.out.println("IAE: " + request + " != valid");
-                }
-                valSet = false;
-                notifyAll();
-            }
-        }
     }
 }

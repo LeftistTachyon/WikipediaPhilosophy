@@ -1,6 +1,6 @@
 
 import org.jsoup.nodes.Document;
-import wikiphil.Main.DocumentRequester;
+import wikiphil.DocumentRequester;
 
 public class DocumentRequesterTest {
     public static void main(String[] args) {
