@@ -20,7 +20,7 @@ public class Main {
     /**
      * # of pages to visit
      */
-    private static final int PAGES_TO_VISIT = 10;
+    private static final int PAGES_TO_VISIT = 100;
 
     /**
      * # of cores on this computer
@@ -79,7 +79,7 @@ public class Main {
         dr = new DocumentRequester();
         new Thread(dr).start();
 
-        int coresToUse = Math.max(CORES - 2, 1);
+        int coresToUse = /*Math.max(CORES - 2, 1)*/ 4;
         System.out.println("Detected " + CORES + " cores; using "
                 + (coresToUse + 1) + ".");
 
@@ -107,7 +107,6 @@ public class Main {
                         Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
                     }
                 }
-                System.out.println("Finished: " + finished);
                 if (++finished == coresToUse) {
                     printStatistics();
                     dr.stop();
@@ -144,7 +143,7 @@ public class Main {
         System.out.printf("Avg time: %.3f ms%n", avgTime / pagesToVisit);
         System.out.printf("%% to philosophy: %.2f%%%n",
                 ((double) toPhil * 100) / pagesToVisit);*/
- /*double start = System.nanoTime();
+        /*double start = System.nanoTime();
         traceToPhilosophy("https://en.wikipedia.org/wiki/1858_in_architecture");
         // also 2018–19 Hamburger SV season
         double total = System.nanoTime() - start;
